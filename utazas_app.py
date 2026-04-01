@@ -93,8 +93,8 @@ if not df.empty:
             
             folium.CircleMarker(
                 location=[row['lat'], row['lon']],
-                radius=6,
-		weight=2,
+                radius=8,
+				weight=2,
                 color=szin,
                 fill=True,
                 fill_color=szin,
@@ -103,7 +103,7 @@ if not df.empty:
                 popup=f"<b>{row['hely']}</b><br>{row['ar']} Ft",
                 # CSAK AKKOR JELENIK MEG A KERETES SZÖVEG, HA RÁVISZED A KURZORT
                 tooltip=folium.Tooltip(
-                    f"<span>{row['hely']}, {row['ar']} £</span>",
+                    f"<span>{row['hely']}</span>",
                     permanent=False,
                     direction="top",
                     style=f"""

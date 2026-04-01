@@ -10,6 +10,9 @@ import time
 # --- 1. OLDAL BEÁLLÍTÁSAI ÉS STÍLUS ---
 st.set_page_config(page_title="Profi Utazás Tervező", layout="wide")
 
+# Napok színei (sorrendben: 1. nap, 2. nap, stb.)
+nap_szinek = ["red", "blue", "green", "purple", "orange", "darkred", "cadetblue", "darkpurple", "pink"]
+
 # Zöld gomb és felület csinosítása
 st.markdown("""
     <style>
@@ -120,41 +123,46 @@ if not df.empty:
 
         # 3. Pontok kirajzolása egyedi CSS ikonokkal
         for _, row in df_map.iterrows():
-            # Ikon kiválasztása
-            if row['kat'] == "Szállás":
-                valasztott_ikon = "bed"
-            elif row['kat'] == "Étterem":
-                valasztott_ikon = "cutlery"
-            elif row['kat'] == "Látnivaló":
-                valasztott_ikon = "camera"
-            elif row['kat'] == "Közlekedés":
-                valasztott_ikon = "bus"
-            else:
-                valasztott_ikon = "map-marker"
+            # 1. NAP SZÍNÉNEK MEGHATÁROZÁSA
+            try:
+                # Kiszedjük a számot a szövegből (pl. "1. nap" -> 1)
+                nap_szam = int(''.join(filter(str.isdigit, str(row['nap']))))
+                # Kiválasztjuk a színt (ha több nap van mint szín, az utolsót használja)
+                szin_index = (nap_szam - 1) % len(nap_szinek)
+                ikon_szine = nap_szinek[szin_index]
+            except:
+                ikon_szine = "black" # Ha nem tudja értelmezni a napot
 
-            # --- EGYEDI CSS STÍLUS AZ IKONHOZ (Piros, fekete körvonal, árnyék) ---
-            # Font Awesome 4.7 ikon, amit a te stílusoddal ruházunk fel
+            # 2. IKON TÍPUSA (marad a kategória alapján)
+            if row['kat'] == "Szállás": ikon_nev = "bed"
+            elif row['kat'] == "Étterem": ikon_nev = "cutlery"
+            elif row['kat'] == "Látnivaló": ikon_nev = "camera"
+            elif row['kat'] == "Közlekedés": ikon_nev = "bus"
+            else: ikon_nev = "map-marker"
+
+            # 3. EGYEDI HTML IKON (Dinamikus színnel)
             icon_html = f"""
                 <div style="
-                    font-size: 24px;
-                    color: red;
+                    font-size: 26px;
+                    color: {ikon_szine};
                     text-shadow: 
                         -1px -1px 0 #000,  1px -1px 0 #000,
-                        -1px  1px 0 #000,  1px  1px 0 #000, /* Vékony fekete körvonal */
-                        2px 2px 4px rgba(0,0,0,0.5); /* Kicsi árnyék */
+                        -1px  1px 0 #000,  1px  1px 0 #000,
+                        2px 2px 5px rgba(0,0,0,0.5);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
                 ">
-                    <i class="fa fa-{valasztott_ikon}"></i>
+                    <i class="fa fa-{ikon_nev}"></i>
                 </div>
             """
 
-            # 4. Megjelenítés DivIcon-nal
             folium.Marker(
                 location=[row['lat'], row['lon']],
-                # A DivIcon használatával a fent definiált HTML-t illesztjük be
                 icon=folium.DivIcon(html=icon_html),
                 tooltip=folium.Tooltip(
-                    f"<b>{row['hely']}</b>", 
-                    style=f"color:white; background-color:red; padding:5px; border-radius:5px;"
+                    f"<b>{row['nap']} - {row['hely']}</b>", 
+                    style=f"color:white; background-color:{ikon_szine}; padding:5px; border-radius:5px;"
                 )
             ).add_to(m)
 

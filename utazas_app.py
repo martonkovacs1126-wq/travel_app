@@ -55,7 +55,7 @@ with st.sidebar.form("input_form", clear_on_submit=True):
     f_hely = st.text_input("Helyszín neve (Város, utca)")
     f_ar = st.number_input("Költség (Ft)", min_value=0, step=500)
     f_kat = st.selectbox("Kategória", list(kat_szinek.keys()))
-    submit = st.form_submit_button("Mentés az SQL-be")
+    submit = st.form_submit_button("Hozzáadás")
 
 if submit and f_hely:
     try:
@@ -92,21 +92,27 @@ if not df.empty:
 
     with col1:
         st.subheader("🗺️ Interaktív Térkép")
+        
+        # --- IDE JÖN A BEILLESZTÉS ---
         if not df_map.empty:
-            m = folium.Map(location=[df_map['lat'].mean(), df_map['lon'].mean()], zoom_start=13)
-            folium.TileLayer(tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', 
-                             attr='Google', name='Google Maps', overlay=True).add_to(m)
+            # Kiszámoljuk a szélességi és hosszúsági fokok átlagát a meglévő pontokból
+            kozep_lat = df_map['lat'].mean()
+            kozep_lon = df_map['lon'].mean()
+            
+            # Térkép létrehozása a pontok közepére fókuszálva
+            m = folium.Map(location=[kozep_lat, kozep_lon], zoom_start=13)
+        else:
+            # Ha az adatbázis üres, Budapesten indul a térkép
+            m = folium.Map(location=[47.4979, 19.0402], zoom_start=10)
+        # --- BEILLESZTÉS VÉGE ---
 
-            for _, row in df_map.iterrows():
-                szin = kat_szinek.get(row['kat'], "gray")
-                folium.CircleMarker(
-                    location=[row['lat'], row['lon']],
-                    radius=8, weight=2, color="white", fill=True, fill_color=szin, fill_opacity=0.8,
-                    tooltip=folium.Tooltip(
-                        f"<b>{row['hely']}</b>", 
-                        style=f"color:white;background-color:{szin};padding:3px;border-radius:4px;"
-                    )
-                ).add_to(m)
+        # Most jön a Google Maps réteg hozzáadása
+        folium.TileLayer(
+            tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', 
+            attr='Google', 
+            name='Google Maps', 
+            overlay=True
+        ).add_to(m)
             st_folium(m, width="100%", height=600, returned_objects=[])
 
     with col2:

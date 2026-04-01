@@ -94,19 +94,15 @@ if not df.empty:
         st.subheader("🗺️ Interaktív Térkép")
         
         # 1. Kiszámoljuk az alaphelyzetet
-        if not df_map.empty:
-            kozep_lat = df_map['lat'].mean()
-            kozep_lon = df_map['lon'].mean()
-            # Ha van adat, oda ugrunk
-            start_coord = [kozep_lat, kozep_lon]
-            start_zoom = 13
-        else:
-            # HA ÜRES VAGY NEM TALÁLJA: Budapest fix koordinátái
-            start_coord = [47.4979, 19.0402]
+       if not df_map.empty:
+            start_coord = [df_map['lat'].mean(), df_map['lon'].mean()]
             start_zoom = 12
+        else:
+            # London koordinátái, ha nincs más adat
+            start_coord = [51.5074, -0.1278] 
+            start_zoom = 11
 
-        # 2. Térkép objektum létrehozása (alapértelmezett csempék nélkül)
-        m = folium.Map(location=start_coord, zoom_start=start_zoom, tiles=None)
+        m = folium.Map(location=start_coord, zoom_start=start_zoom)
         
         # 3. Google Maps réteg - Próbáljuk meg ezt a stabilabb linket
         folium.TileLayer(

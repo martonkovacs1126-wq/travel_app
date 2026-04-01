@@ -152,14 +152,20 @@ if not df.empty:
             key="main_editor"
         )
         
-        if st.button("Változtatások véglegesítése"):
-            with engine.connect() as conn:
-                conn.execute(text("TRUNCATE TABLE helyszinek"))
-                edited_df.to_sql("helyszinek", engine, if_exists="append", index=False)
-                conn.commit()
-            st.success("Adatbázis frissítve!")
-            st.rerun()
-            
-        st.metric("Összköltség", f"{df['ar'].sum():,} Ft")
-else:
-    st.info("Adj hozzá egy helyszínt a bal oldalon!")
+       if st.button("Változtatások véglegesítése", type="primary"):
+            try:
+                with engine.begin() as conn: # A .begin() automatikusan commitol a végén
+                    # 1. Teljes ürítés
+                    conn.execute(text("TRUNCATE TABLE helyszinek RESTART IDENTITY"))
+                    
+                    # 2. Csak azokat a sorokat mentjük, amik nem teljesen üresek
+                    # Kiszűrjük az 'id' oszlopot, hogy a Postgres új sorrendet generáljon
+                    if not edited_df.empty:
+                        clean_df = edited_df.drop(columns=['id'], errors='ignore')
+                        clean_df.to_sql("helyszinek", engine, if_exists="append", index=False)
+                
+                st.success("Adatbázis sikeresen frissítve!")
+                time.sleep(1) # Várunk egy kicsit, hogy látszódjon az üzenet
+                st.rerun()
+            except Exception as e:
+                st.error(f"Hiba a mentés során: {e}")

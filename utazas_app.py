@@ -8,7 +8,7 @@ from geopy.exc import GeopyError
 import time
 
 # --- 1. OLDAL BEÁLLÍTÁSAI ÉS STÍLUS ---
-st.set_page_config(page_title="Profi Utazás Tervező", layout="wide")
+st.set_page_config(page_title="London 🇬🇧", layout="wide")
 
 # Napok színei (sorrendben: 1. nap, 2. nap, stb.)
 nap_szinek = ["green", "purple", "pink", "beige", "cadetblue", "orange"]
@@ -71,7 +71,7 @@ with st.sidebar.form("input_form", clear_on_submit=True):
 
 if submit and f_hely:
     try:
-        # Keresés megkönnyítése
+        # Keresés megkönnyítésee
         location = geolocator.geocode(f_hely, timeout=10)
         if location:
             with engine.connect() as conn:

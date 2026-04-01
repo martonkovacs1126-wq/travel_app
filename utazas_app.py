@@ -98,50 +98,56 @@ if not df.empty:
     with col1:
         st.subheader("🗺️ Interaktív Térkép")
         
-        # Alaphelyzet (ha nincs adat, Budapest)
-        start_coord = [47.4979, 19.0402] if df_map.empty else [df_map['lat'].mean(), df_map['lon'].mean()]
-        m = folium.Map(location=start_coord, zoom_start=12, tiles=None)
+        # 1. Térkép alaphelyzete
+        if not df_map.empty:
+            start_coord = [df_map['lat'].mean(), df_map['lon'].mean()]
+            start_zoom = 13
+        else:
+            start_coord = [47.4979, 19.0402]
+            start_zoom = 12
+
+        m = folium.Map(location=start_coord, zoom_start=start_zoom, tiles=None)
         
+        # 2. Google Maps réteg
         folium.TileLayer(
             tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
             attr='Google', name='Google Maps', overlay=False
         ).add_to(m)
 
-        # Pontok kirajzolása - VISSZA A SZÍNES KÖRÖKHÖZ
-       for _, row in df_map.iterrows():
-            # 1. Szín meghatározása (Csak a Folium alap színei jók itt!)
+        # 3. Ikonok kirajzolása (Font Awesome 4.7)
+        for _, row in df_map.iterrows():
+            # Fontos: Csak Folium színeket használj (pl. red, blue, green, orange, gray)
             szin = kat_szinek.get(row['kat'], "gray")
             
-            # 2. Ikon kiválasztása (Font Awesome 4.7 nevek)
+            # Ikon választó logika
             if row['kat'] == "Szállás":
-                valasztott_ikon = "bed"
+                ikon_nev, pref = "bed", "fa"
             elif row['kat'] == "Étterem":
-                valasztott_ikon = "cutlery"
+                ikon_nev, pref = "cutlery", "fa"
             elif row['kat'] == "Látnivaló":
-                valasztott_ikon = "camera"
+                ikon_nev, pref = "camera", "fa"
             elif row['kat'] == "Közlekedés":
-                valasztott_ikon = "bus"
+                ikon_nev, pref = "bus", "fa"
             else:
-                valasztott_ikon = "map-marker"
+                ikon_nev, pref = "map-marker", "fa"
 
-            # 3. Megjelenítés Font Awesome ikonnal
             folium.Marker(
                 location=[row['lat'], row['lon']],
-                icon=folium.Icon(
-                    color=szin,           # A gombostű színe
-                    icon=valasztott_ikon,  # Az ikon neve
-                    prefix='fa'           # EZ A LEGFONTOSABB A FONT AWESOME-HOZ
-                ),
-                tooltip=row['hely']
+                icon=folium.Icon(color=szin, icon=ikon_nev, prefix=pref),
+                tooltip=folium.Tooltip(
+                    f"<b>{row['hely']}</b>", 
+                    style=f"color:white; background-color:{szin}; padding:5px; border-radius:5px;"
+                )
             ).add_to(m)
-        # Automatikus ráközelítés a pontokra
+
+        # 4. Automatikus zoom (Fit Bounds)
         if not df_map.empty:
             sw = df_map[['lat', 'lon']].min().values.tolist()
             ne = df_map[['lat', 'lon']].max().values.tolist()
             m.fit_bounds([sw, ne])
 
-        st_folium(m, width="100%", height=600, key="map", returned_objects=[])
-
+        # 5. Megjelenítés - EZ A SOR LEGYEN EGY VONALBAN A 'FOR' CIKLUSSAL
+        st_folium(m, width="100%", height=600, key="map_final", returned_objects=[])
     with col2:
         st.subheader("📊 Lista és Törlés")
         st.write("Törlés: Jelöld ki a sort (bal szél) és nyomj **Delete**-et!")

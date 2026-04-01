@@ -130,35 +130,43 @@ if not df.empty:
 
     with col2:
         st.subheader("📊 Lista és Törlés")
-        st.write("Törléshez kattints a sor szélére és nyomj **Delete**-et!")
+        st.write("Törlés: Jelöld ki a sort (bal szél) és nyomj **Delete**-et!")
         
+        # Ez a kulcs: a key="data_editor" miatt a session_state-be kerül az adat
         edited_df = st.data_editor(
             df, 
             column_order=("nap", "hely", "ar", "kat"),
             num_rows="dynamic",
             hide_index=True,
             use_container_width=True,
-            key="data_editor_main"
+            key="my_editor"
         )
         
         if st.button("Változtatások véglegesítése", type="primary"):
+            # Lekérjük a Session State-ből a TÉNYLEGESEN szerkesztett adatokat
+            # A Streamlit ide menti a törléseket is
+            current_data = st.session_state["my_editor"]["edited_rows"] # (ez csak egy opció, de az alábbi biztosabb)
+            
             try:
-                # Tranzakció indítása: vagy minden sikerül, vagy semmi
-                with engine.begin() as conn:
-                    # 1. Töröljük a régi adatokat és a számlálót
-                    conn.execute(text("TRUNCATE TABLE helyszinek RESTART IDENTITY"))
-                    
-                    # 2. Csak ha maradt adat a táblázatban, akkor töltjük vissza
-                    if not edited_df.empty:
-                        # Az 'id' oszlopot eldobjuk, hogy a Postgres generáljon újat
-                        clean_to_save = edited_df.drop(columns=['id'], errors='ignore')
-                        clean_to_save.to_sql("helyszinek", engine, if_exists="append", index=False)
+                # 1. Előkészítjük az adatot: kidobjuk az ID-t, hogy ne legyen ütközés
+                df_to_save = edited_df.drop(columns=['id'], errors='ignore')
                 
-                st.success("Sikeres mentés!")
+                # 2. SQL Művelet
+                with engine.connect() as conn:
+                    with conn.begin(): # Tranzakció indítása
+                        # Brutális ürítés
+                        conn.execute(text("TRUNCATE TABLE helyszinek RESTART IDENTITY"))
+                        
+                        # Csak ha maradt sor a táblázatban, akkor mentünk
+                        if not df_to_save.empty:
+                            df_to_save.to_sql("helyszinek", engine, if_exists="append", index=False)
+                
+                st.success("Adatbázis szinkronizálva! (Törölve: OK)")
                 time.sleep(1)
                 st.rerun()
+                
             except Exception as e:
-                st.error(f"Hiba történt: {e}")
+                st.error(f"Hiba történt a mentésnél: {e}")
             
         st.metric("Összköltség", f"{df['ar'].sum():,} Ft")
 else:

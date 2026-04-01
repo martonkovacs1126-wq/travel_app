@@ -54,7 +54,10 @@ kat_szinek = {
     "Étterem": "blue",
     "Látnivaló": "green",
     "Közlekedés": "orange",
+    "Múzeum": "gray"
     "Egyéb": "gray"
+    "Reptér": "gray"
+    "Park": "gray"
 }
 
 # --- 4. OLDALSÁV (ADATBEVITEL) ---
@@ -137,7 +140,9 @@ if not df.empty:
             if row['kat'] == "Szállás": ikon_nev = "bed"
             elif row['kat'] == "Étterem": ikon_nev = "cutlery"
             elif row['kat'] == "Látnivaló": ikon_nev = "camera"
-            elif row['kat'] == "Közlekedés": ikon_nev = "bus"
+            elif row['kat'] == "Múzeum": ikon_nev = "building-columns"
+            elif row['kat'] == "Reptér": ikon_nev = "plane-arrival"
+            elif row['kat'] == "Park": ikon_nev = "leaf"
             else: ikon_nev = "map-marker"
 
             # 3. EGYEDI HTML IKON (Dinamikus színnel)

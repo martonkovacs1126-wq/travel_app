@@ -11,7 +11,7 @@ import time
 st.set_page_config(page_title="Profi Utazás Tervező", layout="wide")
 
 # Napok színei (sorrendben: 1. nap, 2. nap, stb.)
-nap_szinek = ["green", "lightred", "pink", "beige", "cadetblue", "orange"]
+nap_szinek = ["green", "purple", "pink", "beige", "cadetblue", "orange"]
 
 # Zöld gomb és felület csinosítása
 st.markdown("""

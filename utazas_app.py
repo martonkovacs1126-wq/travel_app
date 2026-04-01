@@ -93,27 +93,30 @@ if not df.empty:
     with col1:
         st.subheader("🗺️ Interaktív Térkép")
         
-        # --- IDE JÖN A BEILLESZTÉS ---
         if not df_map.empty:
-            # Kiszámoljuk a szélességi és hosszúsági fokok átlagát a meglévő pontokból
             kozep_lat = df_map['lat'].mean()
             kozep_lon = df_map['lon'].mean()
-            
-            # Térkép létrehozása a pontok közepére fókuszálva
             m = folium.Map(location=[kozep_lat, kozep_lon], zoom_start=13)
         else:
-            # Ha az adatbázis üres, Budapesten indul a térkép
             m = folium.Map(location=[47.4979, 19.0402], zoom_start=10)
-        # --- BEILLESZTÉS VÉGE ---
 
-        # Most jön a Google Maps réteg hozzáadása
         folium.TileLayer(
             tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', 
             attr='Google', 
             name='Google Maps', 
             overlay=True
         ).add_to(m)
-            st_folium(m, width="100%", height=600, returned_objects=[])
+
+        for _, row in df_map.iterrows():
+            # ... itt vannak az ikon beállítások ...
+            folium.Marker(
+                location=[row['lat'], row['lon']],
+                # ... ikon és tooltip ...
+            ).add_to(m)
+
+        # EZ A SOR VOLT ROSSZUL BEHÚZVA:
+        # Pontosan a 'for' ciklus KEZDŐPONTJA alá kell esnie, nem beljebb!
+        st_folium(m, width="100%", height=600, returned_objects=[])
 
     with col2:
         st.subheader("📊 Lista kezelése")

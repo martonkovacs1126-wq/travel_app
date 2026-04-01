@@ -54,10 +54,10 @@ kat_szinek = {
     "Étterem": "blue",
     "Látnivaló": "green",
     "Közlekedés": "orange",
-    "Múzeum": "gray"
-    "Egyéb": "gray"
-    "Reptér": "gray"
-    "Park": "gray"
+    "Múzeum": "gray",
+    "Egyéb": "gray",
+    "Reptér": "gray",
+    "Park": "gray",
 }
 
 # --- 4. OLDALSÁV (ADATBEVITEL) ---

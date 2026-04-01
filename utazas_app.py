@@ -180,7 +180,7 @@ if not df.empty:
         st_folium(m, width="100%", height=600, key="map_final_icon_fix", returned_objects=[])
     with col2:
         st.subheader("📊 Lista és Törlés")
-        st.write("Törlés: Jelöld ki a sort (bal szél) és nyomj **Delete**-et!")
+        st.write("**Delete** gomb")
         
         # Ez a kulcs: a key="data_editor" miatt a session_state-be kerül az adat
         edited_df = st.data_editor(

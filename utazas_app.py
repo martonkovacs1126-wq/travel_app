@@ -98,56 +98,73 @@ if not df.empty:
     with col1:
         st.subheader("🗺️ Interaktív Térkép")
         
-        # 1. Térkép alaphelyzete
+        # 1. Térkép alaphelyzete (London, ha üres)
         if not df_map.empty:
             start_coord = [df_map['lat'].mean(), df_map['lon'].mean()]
             start_zoom = 13
         else:
-            start_coord = [47.4979, 19.0402]
+            start_coord = [51.5074, -0.1278] 
             start_zoom = 12
 
-        m = folium.Map(location=start_coord, zoom_start=start_zoom, tiles=None)
+        # Térkép létrehozása, az OpenStreetMap alapértelmezett csempéjével,
+        # hogy ha a Google nem töltene be, akkor se üres tengert láss.
+        m = folium.Map(location=start_coord, zoom_start=start_zoom, tiles='OpenStreetMap')
         
-        # 2. Google Maps réteg
+        # 2. Google Maps réteg - Próbáljuk meg ezt a stabilabb linket
         folium.TileLayer(
             tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
-            attr='Google', name='Google Maps', overlay=False
+            attr='Google',
+            name='Google Maps',
+            overlay=True # Ez legyen True, hogy ráfeküdjön az OSM-re
         ).add_to(m)
 
-        # 3. Ikonok kirajzolása (Font Awesome 4.7)
+        # 3. Pontok kirajzolása egyedi CSS ikonokkal
         for _, row in df_map.iterrows():
-            # Fontos: Csak Folium színeket használj (pl. red, blue, green, orange, gray)
-            szin = kat_szinek.get(row['kat'], "gray")
-            
-            # Ikon választó logika
+            # Ikon kiválasztása
             if row['kat'] == "Szállás":
-                ikon_nev, pref = "bed", "fa"
+                valasztott_ikon = "bed"
             elif row['kat'] == "Étterem":
-                ikon_nev, pref = "cutlery", "fa"
+                valasztott_ikon = "cutlery"
             elif row['kat'] == "Látnivaló":
-                ikon_nev, pref = "camera", "fa"
+                valasztott_ikon = "camera"
             elif row['kat'] == "Közlekedés":
-                ikon_nev, pref = "bus", "fa"
+                valasztott_ikon = "bus"
             else:
-                ikon_nev, pref = "map-marker", "fa"
+                valasztott_ikon = "map-marker"
 
+            # --- EGYEDI CSS STÍLUS AZ IKONHOZ (Piros, fekete körvonal, árnyék) ---
+            # Font Awesome 4.7 ikon, amit a te stílusoddal ruházunk fel
+            icon_html = f"""
+                <div style="
+                    font-size: 24px;
+                    color: red;
+                    text-shadow: 
+                        -1px -1px 0 #000,  1px -1px 0 #000,
+                        -1px  1px 0 #000,  1px  1px 0 #000, /* Vékony fekete körvonal */
+                        2px 2px 4px rgba(0,0,0,0.5); /* Kicsi árnyék */
+                ">
+                    <i class="fa fa-{valasztott_ikon}"></i>
+                </div>
+            """
+
+            # 4. Megjelenítés DivIcon-nal
             folium.Marker(
                 location=[row['lat'], row['lon']],
-                icon=folium.Icon(color=szin, icon=ikon_nev, prefix=pref),
+                # A DivIcon használatával a fent definiált HTML-t illesztjük be
+                icon=folium.DivIcon(html=icon_html),
                 tooltip=folium.Tooltip(
                     f"<b>{row['hely']}</b>", 
-                    style=f"color:white; background-color:{szin}; padding:5px; border-radius:5px;"
+                    style=f"color:white; background-color:red; padding:5px; border-radius:5px;"
                 )
             ).add_to(m)
 
-        # 4. Automatikus zoom (Fit Bounds)
+        # 5. Automatikus zoom (Fit Bounds)
         if not df_map.empty:
             sw = df_map[['lat', 'lon']].min().values.tolist()
             ne = df_map[['lat', 'lon']].max().values.tolist()
             m.fit_bounds([sw, ne])
 
-        # 5. Megjelenítés - EZ A SOR LEGYEN EGY VONALBAN A 'FOR' CIKLUSSAL
-        st_folium(m, width="100%", height=600, key="map_final", returned_objects=[])
+        st_folium(m, width="100%", height=600, key="map_final_icon_fix", returned_objects=[])
     with col2:
         st.subheader("📊 Lista és Törlés")
         st.write("Törlés: Jelöld ki a sort (bal szél) és nyomj **Delete**-et!")

@@ -107,17 +107,30 @@ if not df.empty:
             attr='Google', name='Google Maps', overlay=False
         ).add_to(m)
 
+        # Pontok kirajzolása - VISSZA A SZÍNES KÖRÖKHÖZ
         for _, row in df_map.iterrows():
             szin = kat_szinek.get(row['kat'], "gray")
-            if row['kat'] == "Szállás": ikon, pref = "bed", "fa"
-            elif row['kat'] == "Étterem": ikon, pref = "cutlery", "fa"
-            elif row['kat'] == "Közlekedés": ikon, pref = "bus", "fa"
-            else: ikon, pref = "info-sign", "glyphicon"
-
-            folium.Marker(
+            
+            folium.CircleMarker(
                 location=[row['lat'], row['lon']],
-                icon=folium.Icon(color=szin, icon=ikon, prefix=pref),
-                tooltip=row['hely']
+                radius=10,            # A kör mérete
+                weight=2,             # A körvonal vastagsága
+                color="white",        # Fehér körvonal
+                fill=True,
+                fill_color=szin,      # Kategória szerinti kitöltés
+                fill_opacity=0.9,
+                # A HOVER (lebegő felirat) stílusának visszaállítása:
+                tooltip=folium.Tooltip(
+                    f"<b>{row['hely']}</b><br><i>{row['kat']}</i>", 
+                    style=f"""
+                        color: white; 
+                        background-color: {szin}; 
+                        padding: 8px; 
+                        border-radius: 6px; 
+                        font-family: sans-serif;
+                        box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+                    """
+                )
             ).add_to(m)
 
         # Automatikus ráközelítés a pontokra

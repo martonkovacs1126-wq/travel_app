@@ -143,7 +143,7 @@ if not df.empty:
             # 3. EGYEDI HTML IKON (Dinamikus színnel)
             icon_html = f"""
                 <div style="
-                    font-size: 26px;
+                    font-size: 12px;
                     color: {ikon_szine};
                     text-shadow: 
                         -1px -1px 0 #000,  1px -1px 0 #000,

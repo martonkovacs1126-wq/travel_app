@@ -20,10 +20,6 @@ st.markdown("""
         width: 100%;
     }
     /* A mentés gombot is átszínezzük */
-    button[kind="primary"] {
-        background-color: #28a745 !important;
-        border: none !important;
-    }
     </style>
     """, unsafe_allow_html=True)
 

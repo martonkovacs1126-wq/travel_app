@@ -108,30 +108,32 @@ if not df.empty:
         ).add_to(m)
 
         # Pontok kirajzolása - VISSZA A SZÍNES KÖRÖKHÖZ
-        for _, row in df_map.iterrows():
+       for _, row in df_map.iterrows():
+            # 1. Szín meghatározása (Csak a Folium alap színei jók itt!)
             szin = kat_szinek.get(row['kat'], "gray")
             
-            folium.CircleMarker(
-                location=[row['lat'], row['lon']],
-                radius=10,            # A kör mérete
-                weight=2,             # A körvonal vastagsága
-                color="white",        # Fehér körvonal
-                fill=True,
-                fill_color=szin,      # Kategória szerinti kitöltés
-                fill_opacity=0.9,
-                # A HOVER (lebegő felirat) stílusának visszaállítása:
-                tooltip=folium.Tooltip(
-                    f"<b>{row['hely']}</b>", 
-                    style=f"""
-                        color: white; 
-                        background-color: {szin}; 
-                        padding: 8px; 
-                        font-family: sans-serif;
-                        box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-                    """
-                )
-            ).add_to(m)
+            # 2. Ikon kiválasztása (Font Awesome 4.7 nevek)
+            if row['kat'] == "Szállás":
+                valasztott_ikon = "bed"
+            elif row['kat'] == "Étterem":
+                valasztott_ikon = "cutlery"
+            elif row['kat'] == "Látnivaló":
+                valasztott_ikon = "camera"
+            elif row['kat'] == "Közlekedés":
+                valasztott_ikon = "bus"
+            else:
+                valasztott_ikon = "map-marker"
 
+            # 3. Megjelenítés Font Awesome ikonnal
+            folium.Marker(
+                location=[row['lat'], row['lon']],
+                icon=folium.Icon(
+                    color=szin,           # A gombostű színe
+                    icon=valasztott_ikon,  # Az ikon neve
+                    prefix='fa'           # EZ A LEGFONTOSABB A FONT AWESOME-HOZ
+                ),
+                tooltip=row['hely']
+            ).add_to(m)
         # Automatikus ráközelítés a pontokra
         if not df_map.empty:
             sw = df_map[['lat', 'lon']].min().values.tolist()

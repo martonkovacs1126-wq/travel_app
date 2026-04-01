@@ -63,7 +63,7 @@ kat_szinek = {
 # --- 4. OLDALSÁV (ADATBEVITEL) ---
 st.sidebar.header("📍 Új helyszín")
 with st.sidebar.form("input_form", clear_on_submit=True):
-    f_nap = st.text_input("Nap (pl. 1. nap)")
+    f_nap = st.text_input("1, 2, 3, 4, 5 = szállás, 6 = étterem)")
     f_hely = st.text_input("Helyszín pontos neve (Város is!)")
     f_ar = st.number_input("Költség (Ft)", min_value=0, step=500)
     f_kat = st.selectbox("Kategória", list(kat_szinek.keys()))

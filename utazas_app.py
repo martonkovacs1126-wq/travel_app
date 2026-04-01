@@ -54,10 +54,10 @@ kat_szinek = {
     "Étterem": "blue",
     "Látnivaló": "green",
     "Közlekedés": "orange",
-    "Múzeum": "gray",
-    "Egyéb": "gray",
+    "Múzeum": "gray",    
     "Reptér": "gray",
     "Park": "gray",
+    "Egyéb": "gray",
 }
 
 # --- 4. OLDALSÁV (ADATBEVITEL) ---
@@ -96,13 +96,13 @@ df = pd.read_sql("SELECT * FROM helyszinek ORDER BY id", engine)
 df_map = df.dropna(subset=['lat', 'lon'])
 
 # --- 6. FŐOLDAL ---
-st.title("🌍 Utazási Tervezőm")
+st.title("🌍 London 2026")
 
 if not df.empty:
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        st.subheader("🗺️ Interaktív Térkép")
+        st.subheader("🗺️ Térkép")
         
         # 1. Térkép alaphelyzete (London, ha üres)
         if not df_map.empty:
@@ -128,7 +128,7 @@ if not df.empty:
         for _, row in df_map.iterrows():
             # 1. NAP SZÍNÉNEK MEGHATÁROZÁSA
             try:
-                # Kiszedjük a számot a szövegből (pl. "1. nap" -> 1)
+                # Kiszedjük a számot a szövegből (pl. "1, 2, 3, 4, 5 = szállás, 6 = étterem)
                 nap_szam = int(''.join(filter(str.isdigit, str(row['nap']))))
                 # Kiválasztjuk a színt (ha több nap van mint szín, az utolsót használja)
                 szin_index = (nap_szam - 1) % len(nap_szinek)

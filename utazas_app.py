@@ -126,7 +126,6 @@ if not df.empty:
                         color: white; 
                         background-color: {szin}; 
                         padding: 8px; 
-                        border-radius: 6px; 
                         font-family: sans-serif;
                         box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
                     """

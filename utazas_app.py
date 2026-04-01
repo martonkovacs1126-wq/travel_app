@@ -143,30 +143,37 @@ if not df.empty:
         )
         
         if st.button("Változtatások véglegesítése", type="primary"):
-            # Lekérjük a Session State-ből a TÉNYLEGESEN szerkesztett adatokat
-            # A Streamlit ide menti a törléseket is
-            current_data = st.session_state["my_editor"]["edited_rows"] # (ez csak egy opció, de az alábbi biztosabb)
-            
             try:
-                # 1. Előkészítjük az adatot: kidobjuk az ID-t, hogy ne legyen ütközés
-                df_to_save = edited_df.drop(columns=['id'], errors='ignore')
+                # 1. Megnézzük, mik maradtak a táblázatban (ID-k listája)
+                maradt_id_k = edited_df['id'].tolist() if 'id' in edited_df.columns else []
                 
-                # 2. SQL Művelet
-                with engine.connect() as conn:
-                    with conn.begin(): # Tranzakció indítása
-                        # Brutális ürítés
+                with engine.begin() as conn:
+                    if not maradt_id_k:
+                        # Ha minden sort kitöröltél a táblázatból: ürítjük az egészet
                         conn.execute(text("TRUNCATE TABLE helyszinek RESTART IDENTITY"))
+                    else:
+                        # 2. TÖRÖLJÜK azokat, amik NINCSENEK a listában
+                        # Ez a SQL parancs: "Törölj mindent, aminek az ID-ja nincs a maradékok között"
+                        id_string = ", ".join(map(str, maradt_id_k))
+                        conn.execute(text(f"DELETE FROM helyszinek WHERE id NOT IN ({id_string})"))
                         
-                        # Csak ha maradt sor a táblázatban, akkor mentünk
-                        if not df_to_save.empty:
-                            df_to_save.to_sql("helyszinek", engine, if_exists="append", index=False)
+                        # 3. FRISSÍTJÜK a meglévőket (ha átírtál árat vagy nevet)
+                        for _, row in edited_df.iterrows():
+                            conn.execute(text("""
+                                UPDATE helyszinek 
+                                SET nap = :nap, hely = :hely, ar = :ar, kat = :kat 
+                                WHERE id = :id
+                            """), {
+                                "nap": row['nap'], "hely": row['hely'], 
+                                "ar": row['ar'], "kat": row['kat'], "id": row['id']
+                            })
                 
-                st.success("Adatbázis szinkronizálva! (Törölve: OK)")
+                st.success("Törlés és frissítés sikeres!")
                 time.sleep(1)
                 st.rerun()
                 
             except Exception as e:
-                st.error(f"Hiba történt a mentésnél: {e}")
+                st.error(f"Hiba történt: {e}")
             
         st.metric("Összköltség", f"{df['ar'].sum():,} Ft")
 else:

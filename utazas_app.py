@@ -8,7 +8,7 @@ from geopy.exc import GeopyError
 import time
 
 # --- 1. OLDAL BEÁLLÍTÁSAI ÉS STÍLUS ---
-st.set_page_config(page_title="London 🇬🇧", layout="wide")
+st.set_page_config(page_title="London", layout="wide")
 
 # Napok színei (sorrendben: 1. nap, 2. nap, stb.)
 nap_szinek = ["green", "purple", "pink", "beige", "cadetblue", "orange"]

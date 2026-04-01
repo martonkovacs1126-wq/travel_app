@@ -121,7 +121,7 @@ if not df.empty:
                 fill_opacity=0.9,
                 # A HOVER (lebegő felirat) stílusának visszaállítása:
                 tooltip=folium.Tooltip(
-                    f"<b>{row['hely']}</b><br><i>{row['kat']}</i>", 
+                    f"<b>{row['hely']}</b>", 
                     style=f"""
                         color: white; 
                         background-color: {szin}; 

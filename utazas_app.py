@@ -93,30 +93,44 @@ if not df.empty:
     with col1:
         st.subheader("🗺️ Interaktív Térkép")
         
+        # 1. Kiszámoljuk az alaphelyzetet
         if not df_map.empty:
             kozep_lat = df_map['lat'].mean()
             kozep_lon = df_map['lon'].mean()
-            m = folium.Map(location=[kozep_lat, kozep_lon], zoom_start=13)
+            # Ha van adat, oda ugrunk
+            start_coord = [kozep_lat, kozep_lon]
+            start_zoom = 13
         else:
-            m = folium.Map(location=[47.4979, 19.0402], zoom_start=10)
+            # HA ÜRES VAGY NEM TALÁLJA: Budapest fix koordinátái
+            start_coord = [47.4979, 19.0402]
+            start_zoom = 12
 
+        # 2. Térkép objektum létrehozása (alapértelmezett csempék nélkül)
+        m = folium.Map(location=start_coord, zoom_start=start_zoom, tiles=None)
+        
+        # 3. Google Maps réteg - Próbáljuk meg ezt a stabilabb linket
         folium.TileLayer(
-            tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', 
-            attr='Google', 
-            name='Google Maps', 
-            overlay=True
+            tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+            attr='Google',
+            name='Google Maps',
+            overlay=False, # Ez legyen False, hogy ez legyen az alapréteg
+            control=True
         ).add_to(m)
 
-        for _, row in df_map.iterrows():
-            # ... itt vannak az ikon beállítások ...
-            folium.Marker(
-                location=[row['lat'], row['lon']],
-                # ... ikon és tooltip ...
-            ).add_to(m)
+        # 4. Pontok felrakása
+        if not df_map.empty:
+            for _, row in df_map.iterrows():
+                szin = kat_szinek.get(row['kat'], "blue")
+                
+                # Itt használjuk a sima Markert, hogy biztosan látszódjon
+                folium.Marker(
+                    location=[row['lat'], row['lon']],
+                    icon=folium.Icon(color=szin, icon="info-sign"),
+                    tooltip=row['hely']
+                ).add_to(m)
 
-        # EZ A SOR VOLT ROSSZUL BEHÚZVA:
-        # Pontosan a 'for' ciklus KEZDŐPONTJA alá kell esnie, nem beljebb!
-        st_folium(m, width="100%", height=600, returned_objects=[])
+        # 5. Térkép megjelenítése
+        st_folium(m, width=700, height=500, returned_objects=[])
 
     with col2:
         st.subheader("📊 Lista kezelése")

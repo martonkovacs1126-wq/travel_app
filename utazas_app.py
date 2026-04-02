@@ -73,20 +73,30 @@ with st.sidebar.form("input_form", clear_on_submit=True):
 
 if submit and f_hely:
     try:
-        # Próbáljuk meg 20 másodperces várakozással
         location = geolocator.geocode(f_hely, timeout=20)
-        
         if location:
-            # Itt jön a mentés az adatbázisba (a kódod többi része változatlan)
-            # ...
-            st.sidebar.success(f"{f_hely} mentve!")
+            with engine.connect() as conn:
+                # Kifejezett tranzakció használata
+                with conn.begin():
+                    conn.execute(text("""
+                        INSERT INTO helyszinek (nap, hely, ar, kat, lat, lon) 
+                        VALUES (:nap, :hely, :ar, :kat, :lat, :lon)
+                    """), {
+                        "nap": f_nap if f_nap else None, 
+                        "hely": f_hely, 
+                        "ar": int(f_ar) if f_ar else 0, 
+                        "kat": f_kat, 
+                        "lat": location.latitude, 
+                        "lon": location.longitude
+                    })
+                # Itt már biztosan az adatbázisban van
+                st.sidebar.success(f"✅ {f_hely} sikeresen mentve!")
+                time.sleep(1)
+                st.rerun()
         else:
-            # Ez akkor fut le, ha a szerver válaszolt, de nem találta a címet
-            st.sidebar.warning(f"Sajnos nem találom: '{f_hely}'. Próbáld pontosabb címmel (pl. város hozzáadásával)!")
-            
+            st.sidebar.warning("Nem találom a helyszínt! Próbáld pontosabban.")
     except Exception as e:
-        # Ez akkor fut le, ha a szerver nem válaszol (Timeout vagy Network error)
-        st.sidebar.error("A térképszolgáltatás jelenleg túlterhelt. Várj pár másodpercet és próbáld újra!")
+        st.sidebar.error(f"SQL Hiba: {e}")
 
 # --- 5. ADATOK LEKÉRÉSE ---
 df = pd.read_sql("SELECT * FROM helyszinek ORDER BY id", engine)
@@ -220,36 +230,41 @@ if not df.empty:
         
         if st.button("Változtatások véglegesítése", type="primary"):
             try:
-                # 1. Megnézzük, mik maradtak a táblázatban (ID-k listája)
                 maradt_id_k = edited_df['id'].tolist() if 'id' in edited_df.columns else []
                 
-                with engine.begin() as conn:
-                    if not maradt_id_k:
-                        # Ha minden sort kitöröltél a táblázatból: ürítjük az egészet
-                        conn.execute(text("TRUNCATE TABLE helyszinek RESTART IDENTITY"))
-                    else:
-                        # 2. TÖRÖLJÜK azokat, amik NINCSENEK a listában
-                        # Ez a SQL parancs: "Törölj mindent, aminek az ID-ja nincs a maradékok között"
-                        id_string = ", ".join(map(str, maradt_id_k))
-                        conn.execute(text(f"DELETE FROM helyszinek WHERE id NOT IN ({id_string})"))
-                        
-                        # 3. FRISSÍTJÜK a meglévőket (ha átírtál árat vagy nevet)
-                        for _, row in edited_df.iterrows():
-                            conn.execute(text("""
-                                UPDATE helyszinek 
-                                SET nap = :nap, hely = :hely, ar = :ar, kat = :kat 
-                                WHERE id = :id
-                            """), {
-                                "nap": row['nap'], "hely": row['hely'], 
-                                "ar": row['ar'], "kat": row['kat'], "id": row['id']
-                            })
+                with engine.connect() as conn:
+                    with conn.begin(): # Ez garantálja, hogy tényleg elmentődik
+                        if not maradt_id_k:
+                            conn.execute(text("TRUNCATE TABLE helyszinek RESTART IDENTITY"))
+                        else:
+                            # Törlés
+                            id_string = ", ".join(map(str, maradt_id_k))
+                            conn.execute(text(f"DELETE FROM helyszinek WHERE id NOT IN ({id_string})"))
+                            
+                            # Frissítés (Hibakezeléssel!)
+                            for _, row in edited_df.iterrows():
+                                # NaN kezelés minden oszlopra
+                                t_nap = str(row['nap']) if pd.notna(row['nap']) else None
+                                t_hely = str(row['hely']) if pd.notna(row['hely']) else "Névtelen"
+                                try:
+                                    t_ar = int(float(row['ar'])) if pd.notna(row['ar']) else 0
+                                except:
+                                    t_ar = 0
+                                    
+                                conn.execute(text("""
+                                    UPDATE helyszinek 
+                                    SET nap = :nap, hely = :hely, ar = :ar, kat = :kat 
+                                    WHERE id = :id
+                                """), {
+                                    "nap": t_nap, "hely": t_hely, 
+                                    "ar": t_ar, "kat": row['kat'], "id": int(row['id'])
+                                })
                 
-                st.success("Törlés és frissítés sikeres!")
+                st.success("Minden változás szinkronizálva!")
                 time.sleep(1)
                 st.rerun()
-                
             except Exception as e:
-                st.error(f"Hiba történt: {e}")
+                st.error(f"Mentési hiba: {e}")
             
         st.metric("Összköltség", f"{df['ar'].sum():,} Ft")
 else:

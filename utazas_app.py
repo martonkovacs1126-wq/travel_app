@@ -126,39 +126,68 @@ if not df.empty:
 
         # 3. Pontok kirajzolása egyedi CSS ikonokkal
         for _, row in df_map.iterrows():
-            # 1. NAP SZÍNÉNEK MEGHATÁROZÁSA
+            # 1. NAP SZÍNÉNEK MEGHATÁROZÁSA + ÜRES NAP ELLENŐRZÉSE
+            # Megnézzük, hogy a 'nap' üres-e (None, üres szöveg vagy "null")
+            is_empty_day = pd.isna(row['nap']) or str(row['nap']).strip() == "" or str(row['nap']).lower() == "null"
+            
             try:
-                # Kiszedjük a számot a szövegből (pl. "1, 2, 3, 4, 5 = szállás, 6 = étterem)
-                nap_szam = int(''.join(filter(str.isdigit, str(row['nap']))))
-                # Kiválasztjuk a színt (ha több nap van mint szín, az utolsót használja)
-                szin_index = (nap_szam - 1) % len(nap_szinek)
-                ikon_szine = nap_szinek[szin_index]
+                if is_empty_day:
+                    ikon_szine = "gray"  # Ha üres, szürke legyen az alap
+                    opacity = "0.4"      # És halványabb az ikon
+                else:
+                    # Kiszedjük a számot a szövegből
+                    nap_szam = int(''.join(filter(str.isdigit, str(row['nap']))))
+                    szin_index = (nap_szam - 1) % len(nap_szinek)
+                    ikon_szine = nap_szinek[szin_index]
+                    opacity = "1.0"
             except:
-                ikon_szine = "black" # Ha nem tudja értelmezni a napot
+                ikon_szine = "black"
+                opacity = "1.0"
+                is_empty_day = False # Ha hiba van, de nem üres, ne tegyen kérdőjelet
 
-            # 2. IKON TÍPUSA (marad a kategória alapján)
+            # 2. IKON TÍPUSA
             if row['kat'] == "Szállás": ikon_nev = "bed"
             elif row['kat'] == "Étterem": ikon_nev = "cutlery"
             elif row['kat'] == "Látnivaló": ikon_nev = "camera"
-            elif row['kat'] == "Múzeum": ikon_nev = "landmark"
-            elif row['kat'] == "Reptér": ikon_nev = "plane-arrival"
+            elif row['kat'] == "Múzeum": ikon_nev = "university" # A 'landmark' fa-4.7-ben 'university'
+            elif row['kat'] == "Reptér": ikon_nev = "plane"     # A 'plane-arrival' helyett stabilabb a 'plane'
             elif row['kat'] == "Park": ikon_nev = "leaf"
             else: ikon_nev = "map-marker"
 
-            # 3. EGYEDI HTML IKON (Dinamikus színnel)
+            # 3. KÉRDŐJEL GENERÁLÁSA (Csak ha a nap üres)
+            question_mark_html = ""
+            if is_empty_day:
+                question_mark_html = """
+                    <i class="fa fa-question" style="
+                        position: absolute;
+                        color: orange;
+                        font-size: 14px;
+                        font-weight: bold;
+                        text-shadow: 1px 1px 2px #000;
+                        z-index: 10;
+                    "></i>
+                """
+
+            # 4. EGYEDI HTML IKON (Egymásra rétegezve)
             icon_html = f"""
                 <div style="
                     font-size: 16px;
-                    color: {ikon_szine};
-                    text-shadow: 
-                        -1px -1px 0 #000,  1px -1px 0 #000,
-                        -1px  1px 0 #000,  1px  1px 0 #000,
-                        2px 2px 5px rgba(0,0,0,0.5);
                     display: flex;
                     justify-content: center;
                     align-items: center;
+                    position: relative;
+                    width: 20px;
+                    height: 20px;
                 ">
-                    <i class="fa fa-{ikon_nev}"></i>
+                    <i class="fa fa-{ikon_nev}" style="
+                        color: {ikon_szine};
+                        opacity: {opacity};
+                        text-shadow: 
+                            -1px -1px 0 #000,  1px -1px 0 #000,
+                            -1px  1px 0 #000,  1px  1px 0 #000,
+                            2px 2px 5px rgba(0,0,0,0.5);
+                    "></i>
+                    {question_mark_html}
                 </div>
             """
 
@@ -166,7 +195,7 @@ if not df.empty:
                 location=[row['lat'], row['lon']],
                 icon=folium.DivIcon(html=icon_html),
                 tooltip=folium.Tooltip(
-                    f"<b>{row['nap']} - {row['hely']}</b>", 
+                    f"<b>{row['nap'] if not is_empty_day else '???'} - {row['hely']}</b>", 
                     style=f"color:white; background-color:{ikon_szine}; padding:5px; border-radius:5px;"
                 )
             ).add_to(m)

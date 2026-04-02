@@ -47,7 +47,9 @@ def init_db():
 init_db()
 
 # --- 3. SZOLGÁLTATÁSOK ---
-geolocator = Nominatim(user_agent="Travel_Planner_Final_2026")
+#geolocator = Nominatim(user_agent="Travel_Planner_Final_2026")
+# Használj egyedi nevet, és adjunk több időt a válaszra
+geolocator = Nominatim(user_agent="London_Trip_Planner_Unique_ID_12345")
 
 kat_szinek = {
     "Szállás": "red",
@@ -72,7 +74,7 @@ with st.sidebar.form("input_form", clear_on_submit=True):
 if submit and f_hely:
     try:
         # Keresés megkönnyítésee
-        location = geolocator.geocode(f_hely, timeout=10)
+        location = geolocator.geocode(f_hely, timeout=20)
         if location:
             with engine.connect() as conn:
                 conn.execute(text("""

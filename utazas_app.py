@@ -158,7 +158,7 @@ if not df.empty:
                     <i class="fa fa-question" style="
                         position: absolute;
                         color: orange;
-                        font-size: 14px;
+                        font-size: 10px;
                         font-weight: bold;
                         text-shadow: 1px 1px 2px #000;
                         z-index: 10;

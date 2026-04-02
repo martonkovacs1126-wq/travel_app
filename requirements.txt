@@ -5,3 +5,7 @@ streamlit-folium
 geopy
 sqlalchemy
 psycopg2-binary
+python-fasthtml
+sqlalchemy
+pandas
+psycopg2-binary

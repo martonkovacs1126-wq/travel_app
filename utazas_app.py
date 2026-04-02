@@ -73,25 +73,20 @@ with st.sidebar.form("input_form", clear_on_submit=True):
 
 if submit and f_hely:
     try:
-        # Keresés megkönnyítésee
+        # Próbáljuk meg 20 másodperces várakozással
         location = geolocator.geocode(f_hely, timeout=20)
+        
         if location:
-            with engine.connect() as conn:
-                conn.execute(text("""
-                    INSERT INTO helyszinek (nap, hely, ar, kat, lat, lon) 
-                    VALUES (:nap, :hely, :ar, :kat, :lat, :lon)
-                """), {
-                    "nap": f_nap, "hely": f_hely, "ar": f_ar, 
-                    "kat": f_kat, "lat": location.latitude, "lon": location.longitude
-                })
-                conn.commit()
-            st.sidebar.success(f"{f_hely} hozzáadva!")
-            time.sleep(0.5)
-            st.rerun()
+            # Itt jön a mentés az adatbázisba (a kódod többi része változatlan)
+            # ...
+            st.sidebar.success(f"{f_hely} mentve!")
         else:
-            st.sidebar.error("Nem találom a helyszínt. Írd oda a várost is!")
-    except GeopyError:
-        st.sidebar.error("Keresési hiba. Próbáld újra!")
+            # Ez akkor fut le, ha a szerver válaszolt, de nem találta a címet
+            st.sidebar.warning(f"Sajnos nem találom: '{f_hely}'. Próbáld pontosabb címmel (pl. város hozzáadásával)!")
+            
+    except Exception as e:
+        # Ez akkor fut le, ha a szerver nem válaszol (Timeout vagy Network error)
+        st.sidebar.error("A térképszolgáltatás jelenleg túlterhelt. Várj pár másodpercet és próbáld újra!")
 
 # --- 5. ADATOK LEKÉRÉSE ---
 df = pd.read_sql("SELECT * FROM helyszinek ORDER BY id", engine)

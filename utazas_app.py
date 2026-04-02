@@ -46,7 +46,7 @@ def MapComponent(df):
                     }});
                     L.marker([loc.lat, loc.lon], {{icon: icon}}).addTo(map)
                      .bindTooltip(loc.hely);
-                }
+                
             }});
         """)
     )
